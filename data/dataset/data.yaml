@@ -1,0 +1,13 @@
+train: /Users/Unliv/PycharmProjects/SignLanguageDetection-CW/data/dataset/images/train
+val: /Users/Unliv/PycharmProjects/SignLanguageDetection-CW/data/dataset/images/valid
+test: /Users/Unliv/PycharmProjects/SignLanguageDetection-CW/data/dataset/images/test
+
+nc: 26
+names: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+roboflow:
+  workspace: yolo-bkh56
+  project: signlanguage-hcsec
+  version: 3
+  license: MIT
+  url: https://universe.roboflow.com/yolo-bkh56/signlanguage-hcsec/dataset/3

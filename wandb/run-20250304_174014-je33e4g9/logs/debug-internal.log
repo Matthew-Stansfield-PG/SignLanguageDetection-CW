@@ -1,0 +1,15 @@
+{"time":"2025-03-04T17:40:14.5969725Z","level":"INFO","msg":"stream: starting","core version":"0.19.7","symlink path":"C:\\Users\\Unliv\\PycharmProjects\\SignLanguageDetection-CW\\wandb\\run-20250304_174014-je33e4g9\\logs\\debug-core.log"}
+{"time":"2025-03-04T17:40:15.7137929Z","level":"INFO","msg":"created new stream","id":"je33e4g9"}
+{"time":"2025-03-04T17:40:15.7137929Z","level":"INFO","msg":"stream: started","id":"je33e4g9"}
+{"time":"2025-03-04T17:40:15.7143194Z","level":"INFO","msg":"writer: Do: started","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:40:15.7143445Z","level":"INFO","msg":"handler: started","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:40:15.7143445Z","level":"INFO","msg":"sender: started","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:40:16.028701Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-03-04T17:55:54.6493762Z","level":"INFO","msg":"stream: closing","id":"je33e4g9"}
+{"time":"2025-03-04T17:55:54.6493762Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-03-04T17:55:54.6493762Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-03-04T17:55:55.2196091Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-03-04T17:55:55.4186147Z","level":"INFO","msg":"handler: closed","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:55:55.4187048Z","level":"INFO","msg":"writer: Close: closed","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:55:55.4187048Z","level":"INFO","msg":"sender: closed","stream_id":"je33e4g9"}
+{"time":"2025-03-04T17:55:55.4187048Z","level":"INFO","msg":"stream: closed","id":"je33e4g9"}
