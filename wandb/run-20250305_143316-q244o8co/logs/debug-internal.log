@@ -1,0 +1,16 @@
+{"time":"2025-03-05T14:33:16.6949759Z","level":"INFO","msg":"stream: starting","core version":"0.19.7","symlink path":"C:\\Users\\Unliv\\PycharmProjects\\SignLanguageDetection-CW\\wandb\\run-20250305_143316-q244o8co\\logs\\debug-core.log"}
+{"time":"2025-03-05T14:33:18.2001725Z","level":"INFO","msg":"created new stream","id":"q244o8co"}
+{"time":"2025-03-05T14:33:18.2007136Z","level":"INFO","msg":"stream: started","id":"q244o8co"}
+{"time":"2025-03-05T14:33:18.2007136Z","level":"INFO","msg":"sender: started","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:33:18.2007136Z","level":"INFO","msg":"handler: started","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:33:18.2007136Z","level":"INFO","msg":"writer: Do: started","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:33:18.5667906Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-03-05T14:46:20.3538942Z","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/files/unliveddisc03-city-university-of-london/INM705-CW/q244o8co/file_stream\": read tcp 192.168.0.30:57692->35.186.228.49:443: wsarecv: An existing connection was forcibly closed by the remote host."}
+{"time":"2025-03-05T14:46:24.3949566Z","level":"INFO","msg":"stream: closing","id":"q244o8co"}
+{"time":"2025-03-05T14:46:24.3949566Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-03-05T14:46:24.3954774Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-03-05T14:46:28.5243886Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-03-05T14:46:30.7084745Z","level":"INFO","msg":"handler: closed","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:46:30.7084745Z","level":"INFO","msg":"writer: Close: closed","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:46:30.7084745Z","level":"INFO","msg":"sender: closed","stream_id":"q244o8co"}
+{"time":"2025-03-05T14:46:30.7091175Z","level":"INFO","msg":"stream: closed","id":"q244o8co"}

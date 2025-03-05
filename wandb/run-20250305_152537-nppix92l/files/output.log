@@ -1,0 +1,19 @@
+Freezing layer 'model.22.dfl.conv.weight'
+[34m[1mtrain: [0mScanning C:\Users\Unliv\PycharmProjects\SignLanguageDetection-CW\data\dataset\labels\train.cache... 1512 images, 0 backgrounds, 0 corrupt: 100%|██████████| 1512/1512 [00:00<?, ?it/s]
+[34m[1mval: [0mScanning C:\Users\Unliv\PycharmProjects\SignLanguageDetection-CW\data\dataset\labels\valid.cache... 144 images, 0 backgrounds, 0 corrupt: 100%|██████████| 144/144 [00:00<?, ?it/s]
+Plotting labels to INM705-CW\Sign_language_recognition_model2\labels.jpg...
+[34m[1moptimizer:[0m 'optimizer=auto' found, ignoring 'lr0=0.01' and 'momentum=0.937' and determining best 'optimizer', 'lr0' and 'momentum' automatically...
+[34m[1moptimizer:[0m AdamW(lr=0.000333, momentum=0.9) with parameter groups 57 weight(decay=0.0), 64 weight(decay=0.0005), 63 bias(decay=0.0)
+[34m[1mTensorBoard: [0mmodel graph visualization added ✅
+Image sizes 640 train, 640 val
+Using 0 dataloader workers
+Logging results to [1mINM705-CW\Sign_language_recognition_model2[0m
+Starting training for 2 epochs...
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+        1/2         0G      1.062      4.254      1.489         19        640: 100%|██████████| 95/95 [05:14<00:00,  3.31s/it]
+                 Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|██████████| 5/5 [00:10<00:00,  2.10s/it]
+                   all        144        144     0.0348       0.88      0.143      0.112
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+        2/2         0G      0.937       3.93      1.419         39        640:  22%|██▏       | 21/95 [01:12<04:30,  3.65s/it]
