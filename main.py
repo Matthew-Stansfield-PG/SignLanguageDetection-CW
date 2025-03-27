@@ -26,4 +26,4 @@ torch.use_deterministic_algorithms(True)
 
 #if main required to avoid erroring and allow multiprocessing
 if __name__ == '__main__':
-    multiprocessing.freeze_support()  # For Windows executables compatibility
+    multiprocessing.freeze_support()

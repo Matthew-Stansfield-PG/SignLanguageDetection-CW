@@ -1,3 +1,5 @@
 image_size : 256
 noc : 3
 batch_size : 4
+nz : 50
+ngf :
