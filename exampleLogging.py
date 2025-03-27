@@ -6,7 +6,7 @@ from torch import optim
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-from dataset import TranslationDataset
+from datasetPokemon import TranslationDataset
 from logger import Logger
 from models import EncoderRNN, AttnDecoderGRU, DecoderRNN
 from attention_models import SelfAttention
