@@ -1,5 +1,6 @@
 image_size : 256
 noc : 3
-batch_size : 4
+batch_size : 16
 nz : 50
-ngf :
+epochs: 10
+lr: 0.0001

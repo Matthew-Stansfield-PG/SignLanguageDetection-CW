@@ -13,44 +13,56 @@ from logger import Logger
 import torchvision.utils as vutils
 import os
 import yaml
+
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print("Current device:", device)
+
     with open('config.yaml', 'r') as f:
         config = yaml.safe_load(f)
-    print("Current device:", device)
+
     manualSeed = 42
     print("Random Seed:", manualSeed)
     random.seed(manualSeed)
     torch.manual_seed(manualSeed)
     torch.use_deterministic_algorithms(True)
-    num_epochs = 500
-    batch_size = 4
+
+    num_epochs = config['epochs'] #was 500
+    batch_size =  config['batch_size']
     generator_input_size = config['nz']
-    learning_rate = 0.0002
+    learning_rate = config['lr']
     beta1 = 0.5
+
     # Get dataset and DataLoader
     training_set = get_data()
-    train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True,num_workers=4)
+    train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True,num_workers=4, drop_last=True)
+
     # Initialize models
     generator = Generator().to(device)
     discriminator = Discriminator().to(device)
+
     # Loss and optimizers
     loss_function = nn.BCELoss()
     optimizer_generator = optim.Adam(generator.parameters(), lr=learning_rate, betas=(beta1, 0.999))
     optimizer_discriminator = optim.Adam(discriminator.parameters(), lr=learning_rate, betas=(beta1, 0.999))
+
     # Logger
     logger = Logger('gan-training').get_logger()
+
     # Create output directory
     output_dir = "output_images"
     os.makedirs(output_dir, exist_ok=True)
+
     # Fixed noise for evaluation (e.g., 64 samples)
     fixed_noise = torch.randn(64, generator_input_size, 1, 1).to(device)
     start = time.time()
+
     for epoch in range(num_epochs + 1):
         print("Running epoch number: ",epoch)
         for n, (real_samples, _) in enumerate(train_loader):
-            print(n)
+            if n % 100 == 0:
+                print(n)
             real_samples = real_samples.to(device)
             real_samples_labels = torch.ones((real_samples.size(0), 1)).to(device)
             # Generate fake samples
@@ -58,6 +70,7 @@ if __name__ == '__main__':
             generated_samples = generator(latent_space_samples)
             generated_samples_labels = torch.zeros((real_samples.size(0), 1)).to(device)
         print("Training for this epoch...")
+
         # Train Discriminator
         discriminator.zero_grad()
         all_samples = torch.cat((real_samples, generated_samples))
@@ -66,6 +79,7 @@ if __name__ == '__main__':
         loss_discriminator = loss_function(output_discriminator, all_labels)
         loss_discriminator.backward()
         optimizer_discriminator.step()
+
         # Train Generator
         generator.zero_grad()
         latent_space_samples = torch.randn((real_samples.size(0), generator_input_size, 1, 1)).to(device)
@@ -75,6 +89,7 @@ if __name__ == '__main__':
         loss_generator.backward()
         optimizer_generator.step()
         print("Finished training for this epoch...")
+
         if epoch % 5 == 0:
             print("Time taken for 5 epochs: {:.2f}s".format(time.time() - start))
             start = time.time()
