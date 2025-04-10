@@ -38,6 +38,11 @@ if __name__ == '__main__':
     training_set = get_data()
     train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True,num_workers=4, drop_last=True)
 
+    # denormalizes data after it had been normalized for the GAN's Tanh
+    transform_denormalize = transforms.Compose(
+    [transforms.Normalize((0, 0, 0), (1 / 0.5, 1 / 0.5, 1 / 0.5)),
+    transforms.Normalize((-0.5, -0.5, -0.5), (1, 1, 1))])
+
     # Initialize models
     generator = Generator().to(device)
     discriminator = Discriminator().to(device)
@@ -60,6 +65,7 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs + 1):
         print("Running epoch number: ",epoch)
+        print("Training for this epoch...")
         for n, (real_samples, _) in enumerate(train_loader):
             if n % 100 == 0:
                 print(n)
@@ -69,40 +75,44 @@ if __name__ == '__main__':
             latent_space_samples = torch.randn((real_samples.size(0), generator_input_size, 1, 1)).to(device)
             generated_samples = generator(latent_space_samples)
             generated_samples_labels = torch.zeros((real_samples.size(0), 1)).to(device)
-        print("Training for this epoch...")
 
-        # Train Discriminator
-        discriminator.zero_grad()
-        all_samples = torch.cat((real_samples, generated_samples))
-        all_labels = torch.cat((real_samples_labels, generated_samples_labels))
-        output_discriminator = discriminator(all_samples).view(-1, 1)
-        loss_discriminator = loss_function(output_discriminator, all_labels)
-        loss_discriminator.backward()
-        optimizer_discriminator.step()
 
-        # Train Generator
-        generator.zero_grad()
-        latent_space_samples = torch.randn((real_samples.size(0), generator_input_size, 1, 1)).to(device)
-        generated_samples = generator(latent_space_samples)
-        output_discriminator_generated = discriminator(generated_samples).view(-1, 1)
-        loss_generator = loss_function(output_discriminator_generated, real_samples_labels)
-        loss_generator.backward()
-        optimizer_generator.step()
+            # Train Discriminator
+            discriminator.zero_grad()
+            all_samples = torch.cat((real_samples, generated_samples))
+            all_labels = torch.cat((real_samples_labels, generated_samples_labels))
+            output_discriminator = discriminator(all_samples).view(-1, 1)
+            loss_discriminator = loss_function(output_discriminator, all_labels)
+            loss_discriminator.backward()
+            optimizer_discriminator.step()
+
+            # Train Generator
+            generator.zero_grad()
+            latent_space_samples = torch.randn((real_samples.size(0), generator_input_size, 1, 1)).to(device)
+            generated_samples = generator(latent_space_samples)
+            output_discriminator_generated = discriminator(generated_samples).view(-1, 1)
+            loss_generator = loss_function(output_discriminator_generated, real_samples_labels)
+            loss_generator.backward()
+            optimizer_generator.step()
         print("Finished training for this epoch...")
 
+        #if epoch % 1 == 0:
+        print("Time taken for epoch: {:.2f}s".format(time.time() - start))
+        start = time.time()
+
+        print(f"Epoch {epoch} - Loss D: {loss_discriminator.item():.4f}, Loss G: {loss_generator.item():.4f}")
+        logger.log({
+            'epoch': epoch,
+            'loss_discriminator': loss_discriminator.item(),
+            'loss_generator': loss_generator.item()
+        })
         if epoch % 5 == 0:
-            print("Time taken for 5 epochs: {:.2f}s".format(time.time() - start))
-            start = time.time()
-            print(f"Epoch {epoch} - Loss D: {loss_discriminator.item():.4f}, Loss G: {loss_generator.item():.4f}")
-            logger.log({
-                'epoch': epoch,
-                'loss_discriminator': loss_discriminator.item(),
-                'loss_generator': loss_generator.item()
-            })
             generator.eval()
             with torch.no_grad():
+
                 fake_images = generator(fixed_noise)
                 fake_images = (fake_images + 1) / 2
                 vutils.save_image(fake_images, os.path.join(output_dir, f"epoch_{epoch}.png"), nrow=8, normalize=True)
+                print("saving images...")
             generator.train()
         print("epoch ended")

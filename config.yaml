@@ -1,8 +1,8 @@
-image_size : 256
+image_size : 64
 noc : 3
 batch_size : 16
 nz : 50
 epochs: 100
 lr: 0.0001
-ngf: 256 #feature map size for generator, higher number = higher quality but slower training
-ndf: 256
+ngf: 64 #feature map size for generator, higher number = higher quality but slower training
+ndf: 64
