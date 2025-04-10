@@ -12,19 +12,19 @@ class Generator(nn.Module):
         self.ngf = config['image_size'] #feature_map_size_generator
         self.noc = config['noc']
         self.main = nn.Sequential(
-            nn.ConvTranspose2d(self.nz, self.ngf * 8, 4, 1, 0, bias=False),  # 4x4
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf * 8, self.ngf * 4, 4, 2, 1, bias=False),  # 8x8
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf * 4, self.ngf * 2, 4, 2, 1, bias=False),  # 16x16
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf * 2, self.ngf, 4, 2, 1, bias=False),  # 32x32
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf, self.ngf // 2, 4, 2, 1, bias=False),  # 64x64
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf // 2, self.ngf // 4, 4, 2, 1, bias=False),  # 128x128
-            nn.ReLU(True),
-            nn.ConvTranspose2d(self.ngf // 4, self.noc, 4, 2, 1, bias=False),  # 256x256
+            nn.ConvTranspose2d(self.nz, self.ngf * 8, 4, 1, 0),  # 4x4
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf * 8, self.ngf * 4, 4, 2, 1),  # 8x8
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf * 4, self.ngf * 2, 4, 2, 1),  # 16x16
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf * 2, self.ngf, 4, 2, 1),  # 32x32
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf, self.ngf, 4, 2, 1),  # 64x64
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf, self.ngf, 4, 2, 1),  # 128x128
+            nn.ReLU(),
+            nn.ConvTranspose2d(self.ngf, self.noc, 4, 2, 1),  # 256x256
             nn.Tanh()
         )
 
