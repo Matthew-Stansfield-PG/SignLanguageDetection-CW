@@ -41,8 +41,8 @@ def get_data():
     #makes all images 256x256 and transforms them to a tensor
     transform = transforms.Compose([
         transforms.Resize((image_size, image_size)),
-        transforms.ToTensor()  # No normalization here
-    ])
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     training_set = torchvision.datasets.ImageFolder(root=root_path, transform=transform)
 
