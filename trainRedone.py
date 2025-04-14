@@ -54,16 +54,16 @@ if __name__ == '__main__':
          transforms.Normalize((-0.5, -0.5, -0.5), (1, 1, 1))])
 
 
-    # for n, (real_samples, real_label) in enumerate(train_loader):
-    #     for i in range(batch_size):
-    #         ax = plt.subplot(math.ceil(math.sqrt(batch_size)), math.ceil(math.sqrt(batch_size)), i + 1)
-    #         sample = real_samples[i]
-    #         sample = transform_denormalize(sample)
-    #         plt.imshow(sample.squeeze().permute(1, 2, 0))
-    #         plt.title(real_label[i])
-    #         plt.xticks([])
-    #         plt.yticks([])
-    #     break
+    for n, (real_samples, real_label) in enumerate(train_loader):
+        for i in range(batch_size):
+            ax = plt.subplot(math.ceil(math.sqrt(batch_size)), math.ceil(math.sqrt(batch_size)), i + 1)
+            sample = real_samples[i]
+            sample = transform_denormalize(sample)
+            plt.imshow(sample.squeeze().permute(1, 2, 0))
+            plt.title(real_label[i])
+            plt.xticks([])
+            plt.yticks([])
+        break
 
     generator = Generator().to(device)
     discriminator = Discriminator().to(device)
