@@ -46,19 +46,19 @@ if __name__ == '__main__':
     training_set = torch.utils.data.Subset(training_set, indices_list)#creates subset of data points based on the index of that which is in the indices_list
     #print(training_set)
 
-    train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True, num_workers=2)
+    train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True, num_workers=2)#loads training in dataloader
 
-    #denormalizes data after it had been normalized for the GAN's Tanh
-    transform_denormalize = transforms.Compose(
+    #set up a denormalizer
+    denormalize = transforms.Compose(
         [transforms.Normalize((0, 0, 0), (1 / 0.5, 1 / 0.5, 1 / 0.5)),
          transforms.Normalize((-0.5, -0.5, -0.5), (1, 1, 1))])
 
-
+    #denormalizes data after it had been normalized for the GAN's Tanh
     for n, (real_samples, real_label) in enumerate(train_loader):
         for i in range(batch_size):
             ax = plt.subplot(math.ceil(math.sqrt(batch_size)), math.ceil(math.sqrt(batch_size)), i + 1)
             sample = real_samples[i]
-            sample = transform_denormalize(sample)
+            sample = denormalize(sample)
             plt.imshow(sample.squeeze().permute(1, 2, 0))
             plt.title(real_label[i])
             plt.xticks([])
@@ -117,10 +117,16 @@ if __name__ == '__main__':
             optimizer_generator.step()
 
 
-        print(f"Time taken for epoch: {time.time() - start:.2f}s")
+        print("Time taken for epoch: {:.2f}s".format(time.time() - start))
         start = time.time()
-        print(f"Epoch: {epoch} Loss D.: {loss_discriminator:.4f}")
-        print(f"Epoch: {epoch} Loss G.: {loss_generator:.4f}")
+
+        print(f"Epoch {epoch} - Loss D: {loss_discriminator.item():.4f}, Loss G: {loss_generator.item():.4f}")
+        logger.log({
+            'epoch': epoch,
+            'loss_discriminator': loss_discriminator.item(),
+            'loss_generator': loss_generator.item()
+        })
+
 
         if epoch % 5 == 0:
             generator.eval()
