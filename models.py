@@ -3,84 +3,56 @@ import torch
 import yaml
 
 class Generator(nn.Module):
-    def __init__(self):
-        with open('config.yaml', 'r') as f:
-            config = yaml.safe_load(f)
+    def __init__(self, nz=100, ngf=64, nc=3):
         super(Generator, self).__init__()
-        self.nz = config['nz']  # latent vector size
-        self.ngf = config['ngf']  # feature_map_size_generator
-        self.noc = config['noc']  # number of output channels (e.g., 3 for RGB)
-
         self.main = nn.Sequential(
-            # Latent space to initial image size (4x4)
-            nn.ConvTranspose2d(self.nz, self.ngf * 8, 4, 1, 0),  # 4x4
-            nn.BatchNorm2d(self.ngf * 8),
-            nn.ReLU(),
+            # Input: Z latent vector
+            nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(ngf * 8),
+            nn.ReLU(True),
 
-            # Upscaling to 8x8
-            nn.ConvTranspose2d(self.ngf * 8, self.ngf * 4, 4, 2, 1),  # 8x8
-            nn.BatchNorm2d(self.ngf * 4),
-            nn.ReLU(),
+            nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
 
-            # Upscaling to 16x16
-            nn.ConvTranspose2d(self.ngf * 4, self.ngf * 2, 4, 2, 1),  # 16x16
-            nn.BatchNorm2d(self.ngf * 2),
-            nn.ReLU(),
+            nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
 
-            # Upscaling to 32x32
-            nn.ConvTranspose2d(self.ngf * 2, self.ngf, 4, 2, 1),  # 32x32
-            nn.BatchNorm2d(self.ngf),
-            nn.ReLU(),
+            nn.ConvTranspose2d(ngf * 2, ngf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
 
-            # Upscaling to 64x64
-            nn.ConvTranspose2d(self.ngf, self.noc, 4, 2, 1),  # 64x64
-            nn.Tanh()  # Output image in the range [-1, 1]
+            nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False),
+            nn.Tanh()  # Output is normalized [-1, 1]
         )
 
-    def forward(self, x):
-        output = self.main(x)
-        return self.main(x)
+    def forward(self, input):
+        return self.main(input)
 
-# Discriminator for 64x64 images
 class Discriminator(nn.Module):
-    def __init__(self, **kwargs):
-        with open('config.yaml', 'r') as f:
-            config = yaml.safe_load(f)
+    def __init__(self, nc=3, ndf=64):
         super(Discriminator, self).__init__()
-        self.ndf = config['ndf']  # feature map size discriminator
-        self.noc = 3  # Number of output channels (e.g., RGB for color images)
-
         self.main = nn.Sequential(
-            # Input is (noc) x 64 x 64
-            nn.Conv2d(self.noc, self.ndf, 4, 2, 1, bias=False),  # 64x64 -> 32x32
-            nn.ReLU(True),
-            nn.Dropout(0.3),
+            # Input: Image
+            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
 
-            # State size. (ndf) x 32 x 32
-            nn.Conv2d(self.ndf, self.ndf * 2, 4, 2, 1, bias=False),  # 32x32 -> 16x16
-            #nn.BatchNorm2d(self.ndf * 2),
-            nn.ReLU(True),
-            nn.Dropout(0.3),
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
 
-            # State size. (ndf*2) x 16 x 16
-            nn.Conv2d(self.ndf * 2, self.ndf * 4, 4, 2, 1, bias=False),  # 16x16 -> 8x8
-            #nn.BatchNorm2d(self.ndf*4),
-            nn.ReLU(True),
-            nn.Dropout(0.3),
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
 
-            # State size. (ndf*4) x 8 x 8
-            nn.Conv2d(self.ndf * 4, self.ndf * 8, 4, 2, 1, bias=False),  # 8x8 -> 4x4
-            #nn.BatchNorm2d(self.ndf * 8),
-            nn.ReLU(True),
-            nn.Dropout(0.3),
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
 
-            # State size. (ndf*8) x 4 x 4
-            nn.Conv2d(self.ndf * 8, 1, 4, 1, 0, bias=False),  # 4x4 -> 1x1
-            nn.Sigmoid()  # Output probability for real/fake
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            # No Sigmoid!
         )
 
-    def forward(self, x):
-        # features = self.main(x)
-        output = self.main(x)
-        # return features.view(input.size(0), -1).mean(dim=1, keepdim=True)
-        return output
+    def forward(self, input):
+        return self.main(input)
