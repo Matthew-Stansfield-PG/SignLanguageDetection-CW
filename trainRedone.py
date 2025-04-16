@@ -10,6 +10,7 @@ import yaml
 import time
 import math
 import multiprocessing
+import wandb
 
 from dataset import get_data
 from models import Discriminator, Generator
@@ -120,7 +121,7 @@ if __name__ == '__main__':
             'epoch': epoch,
             'loss_discriminator': loss_discriminator.item(),
             'loss_generator': loss_generator.item()
-        })
+        }, step=epoch)
 
         print("Time for epoch:", round(time.time() - start, 2), "seconds")
 
@@ -130,7 +131,11 @@ if __name__ == '__main__':
                 fake_images = generator(fixed_noise).detach().cpu()
                 fake_images = (fake_images + 1) / 2
                 vutils.save_image(fake_images, f"{output_dir}/epoch_{epoch}.png", nrow=8, normalize=True)
+                logger.log({
+                    "DCGAN Generated Images": wandb.Image(vutils.make_grid(fake_images, nrow=8).permute(1,2,0).numpy(), caption=f"Epoch: {epoch}")
+                }, step=epoch)#assembles images in a grid, permute swaps order of channels, height, width to h, w, c for wandb's structure
             generator.train()
+            print("saving and logging images...")
 
     torch.save(generator.state_dict(), "animalImageGAN.pt")
     torch.save(generator, "animalImageGAN_full.pt")
