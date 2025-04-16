@@ -13,7 +13,7 @@ class Logger:
     def get_logger(self):
         return self.logger
 
-logger=Logger(experiment_name='test')
+#logger=Logger(experiment_name='test')
 
 # class Logger:
 #

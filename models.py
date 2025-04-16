@@ -3,7 +3,12 @@ import torch
 import yaml
 
 class Generator(nn.Module):
-    def __init__(self, nz=100, ngf=64, nc=3):
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+        nz=config['nz']
+        ngf=config['ngf']
+        nc=config['nc']
+    def __init__(self, nz=nz, ngf=ngf, nc=3):
         super(Generator, self).__init__()
         self.main = nn.Sequential(
             # Input: Z latent vector
@@ -31,6 +36,10 @@ class Generator(nn.Module):
         return self.main(input)
 
 class Discriminator(nn.Module):
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+        nc=config['nz']
+        ndf=config['ndf']
     def __init__(self, nc=3, ndf=64):
         super(Discriminator, self).__init__()
         self.main = nn.Sequential(
