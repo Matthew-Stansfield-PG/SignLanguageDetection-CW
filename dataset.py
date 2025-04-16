@@ -46,7 +46,23 @@ def get_data():
 
     training_set = torchvision.datasets.ImageFolder(root=root_path, transform=transform)
 
+    #counts how many of each label appear, takes a while to run so itll be left commented out.
+    # cats=0 #5653
+    # dogs=0 #5239
+    # wild=0 #5238
+    # for i in range(len(training_set)):
+    #     image, label = training_set[i]
+    #     if label == 0:
+    #         cats += 1
+    #     elif label == 1:
+    #         dogs += 1
+    #     else:
+    #         wild += 1
+    #
+    # print("Training image distribution: Cats = "+str(cats)+", Dogs = "+str(dogs)+", Wild = "+str(wild))
+
+
     return training_set
 
-#training_set = get_data()
-#print(training_set)
+
+#train_set = get_data()

@@ -57,7 +57,7 @@ if __name__ == '__main__':
         transforms.Normalize((-0.5, -0.5, -0.5), (1, 1, 1))
     ])
 
-    for real_samples, real_label in train_loader:
+    for real_samples, real_labels in train_loader:
         for i in range(batch_size):
             ax = plt.subplot(math.ceil(math.sqrt(batch_size)), math.ceil(math.sqrt(batch_size)), i + 1)
             sample = denormalize(real_samples[i])
@@ -65,8 +65,9 @@ if __name__ == '__main__':
             plt.xticks([]); plt.yticks([])
         break
 
-    generator = Generator(config['nz'], 64, 3).to(device)
-    discriminator = Discriminator(3, 64).to(device)
+    n_classes = 3
+    generator = Generator(config['nz'], 64, 3, n_classes).to(device)
+    discriminator = Discriminator(4, 64, n_classes).to(device)
     generator.apply(weights_init)
     discriminator.apply(weights_init)
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     optimizer_generator = optim.Adam(generator.parameters(), lr=learning_rate, betas=(beta1, 0.999))
     optimizer_discriminator = optim.Adam(discriminator.parameters(), lr=learning_rate, betas=(beta1, 0.999))
 
-    logger = Logger('gan-training').get_logger()
+    logger = Logger('gan-training-conditional').get_logger()
 
 
     output_dir = "output_images"
@@ -84,38 +85,39 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs + 1):
         start = time.time()
-        for n, (real_samples, _) in enumerate(train_loader):
+        for n, (real_samples, real_labels) in enumerate(train_loader):
             real_samples = real_samples.to(device)
+            real_labels = real_labels.to(device)
             b_size = real_samples.size(0)
 
-            # Smoothing: real=0.9, fake=0.0
-            real_labels = torch.full((b_size,), 0.9, dtype=torch.float, device=device)
-            fake_labels = torch.zeros(b_size, dtype=torch.float, device=device)
+            #smoothing, real=0.9, fake=0
+            real_targets = torch.full((b_size,), 0.9, dtype=torch.float, device=device)
+            fake_targets = torch.zeros(b_size, dtype=torch.float, device=device)
 
-            # Train Discriminator
+            #train discriminator
             discriminator.zero_grad()
 
-            output_real = discriminator(real_samples).view(-1)
-            loss_real = loss_function(output_real, real_labels)
+            output_real = discriminator(real_samples, real_labels).view(-1)
+            loss_real = loss_function(output_real, real_targets)
 
             noise = torch.randn(b_size, generator_input_size, 1, 1, device=device)
-            fake_samples = generator(noise)
-            output_fake = discriminator(fake_samples.detach()).view(-1)
-            loss_fake = loss_function(output_fake, fake_labels)
+            fake_samples = generator(noise, real_labels)
+            output_fake = discriminator(fake_samples.detach(), real_labels).view(-1)
+            loss_fake = loss_function(output_fake, fake_targets)
 
             loss_discriminator = loss_real + loss_fake
             loss_discriminator.backward()
             optimizer_discriminator.step()
 
             generator.zero_grad()
-            output = discriminator(fake_samples).view(-1)
-            loss_generator = loss_function(output, real_labels)
+            output = discriminator(fake_samples, real_labels).view(-1)
+            loss_generator = loss_function(output, real_targets)
             loss_generator.backward()
             optimizer_generator.step()
 
             if n % 50 == 0:
-                print(f"Epoch [{epoch}/{num_epochs}] Batch {n}/{len(train_loader)} \
-                      Loss D: {loss_discriminator.item():.4f}, loss G: {loss_generator.item():.4f}")
+                print(f"Epoch [{epoch}/{num_epochs}] Batch {n}/{len(train_loader)} "
+                      f"Loss D: {loss_discriminator.item():.4f}, loss G: {loss_generator.item():.4f}")
 
         logger.log({
             'epoch': epoch,
@@ -128,7 +130,12 @@ if __name__ == '__main__':
         if epoch % 5 == 0:
             generator.eval()
             with torch.no_grad():
-                fake_images = generator(fixed_noise).detach().cpu()
+                #sample_labels = torch.randint(0, n_classes, (64,), device=device)
+                #print(sample_labels)
+                sample_labels = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+                sample_labels = torch.tensor(sample_labels, dtype=torch.long, device=device)
+                print(sample_labels)
+                fake_images = generator(fixed_noise, sample_labels).detach().cpu()
                 fake_images = (fake_images + 1) / 2
                 vutils.save_image(fake_images, f"{output_dir}/epoch_{epoch}.png", nrow=8, normalize=True)
                 logger.log({
