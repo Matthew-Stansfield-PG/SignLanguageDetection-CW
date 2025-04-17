@@ -10,10 +10,10 @@ class Generator(nn.Module):
         nc=config['nc']
     def __init__(self, nz=nz, ngf=ngf, nc=nc, n_classes=3):
         super(Generator, self).__init__()
-        self.label_embedding = nn.Embedding(n_classes, nz)
+        self.label_embedding = nn.Embedding(n_classes, 10)
         self.main = nn.Sequential(
             # Input: Z latent vector
-            nn.ConvTranspose2d(nz, ngf * 8, 4, 1, 0, bias=False),
+            nn.ConvTranspose2d(nz+10, ngf * 8, 4, 1, 0, bias=False),
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True),
 
@@ -34,8 +34,8 @@ class Generator(nn.Module):
         )
 
     def forward(self, input, labels):
-        label_embeddings = self.label_embedding(labels)
-        input = input + label_embeddings.unsqueeze(2).unsqueeze(3)
+        label_embeddings = self.label_embedding(labels).unsqueeze(2).unsqueeze(3)
+        input = torch.cat([input, label_embeddings], dim=1)
         return self.main(input)
 
 class Discriminator(nn.Module):

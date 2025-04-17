@@ -1,6 +1,6 @@
 image_size : 64
 nc : 3
-batch_size : 32
+batch_size : 64
 #4 16 32 64
 nz : 100 #complexity measure of GAN, higher values can lead to the GAN being able to capture more diverse
 #50 100
