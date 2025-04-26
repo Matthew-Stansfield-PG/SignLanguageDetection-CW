@@ -103,8 +103,6 @@ def train_epoch(dataloader, encoder, decoder, encoder_optimizer,
         plot_and_show_attention(encoder, decoder, input_sentence[0], input_tensor[0,:].unsqueeze(0), output_lang)
     if self_att is not None:
         plot_attention_self(att[0,:,:])
-
-
     return total_loss / len(dataloader)
 
 
