@@ -42,19 +42,19 @@ class Generator(nn.Module):
         # Initial block
         self.init_block = nn.Sequential(
             nn.ConvTranspose2d(nz + 10, ngf * 8, 4, 1, 0, bias=False),
-            ProgressiveSAGANSelfAttention(ngf * 8),
+            #ProgressiveSAGANSelfAttention(ngf * 8),
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True))
 
         # 64x64 blocks
         self.block_64 = nn.Sequential(
             nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
-            ProgressiveSAGANSelfAttention(ngf * 4),
+            #ProgressiveSAGANSelfAttention(ngf * 4),
             nn.BatchNorm2d(ngf * 4),
             nn.ReLU(True),
 
             nn.ConvTranspose2d(ngf * 4, ngf * 2, 4, 2, 1, bias=False),
-            ProgressiveSAGANSelfAttention(ngf * 2),
+            #ProgressiveSAGANSelfAttention(ngf * 2),
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
 
@@ -147,13 +147,13 @@ class Discriminator(nn.Module):
 
         self.block2 = nn.Sequential(
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1),
-            ProgressiveSAGANSelfAttention(ndf * 2),
+            #ProgressiveSAGANSelfAttention(ndf * 2),
             nn.InstanceNorm2d(ndf * 2),
             nn.LeakyReLU(0.2))
 
         self.block3 = nn.Sequential(
             nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1),
-            ProgressiveSAGANSelfAttention(ndf * 4),
+            #ProgressiveSAGANSelfAttention(ndf * 4),
             nn.InstanceNorm2d(ndf * 4),
             nn.LeakyReLU(0.2))
 
