@@ -166,137 +166,137 @@ if __name__ == '__main__':
     fixed_noise = torch.randn(64, generator_input_size, 1, 1).to(device)
 
     max_grad_norm = 5.0
-for epoch in range(num_epochs + 1):
-    start = time.time()
-    models.current_epoch = epoch
-    alpha = 1.0
-    if 500 <= epoch < 800:
-        alpha = (1 - math.cos((epoch - 500) / 300 * math.pi)) / 2
-        alpha = min(alpha, 1.0)
-    if 1500 <= epoch < 2000:
-        alpha = (1 - math.cos((epoch - 1500) / 500 * math.pi)) / 2
-        alpha = min(alpha, 1.0)
-    print(epoch)
-    new_resolution = adjust_resolution(epoch)
-    print("new resolution output: ", new_resolution)
-    if new_resolution > current_resolution:
-        print(f"Resolution changing to {new_resolution} at epoch {epoch}")
-        new_generator = Generator(config['nz'], config['ngf'], config['nc'], 3, new_resolution).to(device)
-        new_discriminator = Discriminator(config['nc'], config['ndf'], 3, new_resolution).to(device)
-        generator.resolution = new_resolution
-        new_generator.load_state_dict(generator.state_dict(), strict=False)
-        new_discriminator.load_state_dict(discriminator.state_dict(), strict=False)
-        generator = new_generator
-        discriminator = new_discriminator
-        optimizer_G = optim.Adam(generator.parameters(), lr=learning_rate_gen, betas=(beta1, beta2))
-        optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_dis, betas=(beta1, beta2))
-        current_resolution = new_resolution
-        #Training_set = get_data(None,current_resolution)
-        #sample_size = len(training_set) // batch_size * batch_size
-        #indices_list = list(range(sample_size))
-        #training_set = torch.utils.data.Subset(training_set, indices_list)
-        #train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True, num_workers=8)
-
-    noise_std = get_noise_std(epoch)
-    loss_discriminator = 0.0
-    loss_generator = 0.0
-    class_losses_D = {}
-    class_losses_G = {}
-
-    for n, (real_images, labels) in enumerate(train_loader):
-        real_images = real_images.to(device)
-        labels = labels.to(device)
-        b_size = real_images.size(0)
-
-        if current_resolution == 128 and real_images.size(2) == 64:
-            real_images = F.interpolate(real_images, size=128)
-
-        unique_labels = torch.unique(labels)
-
-        for label_class in unique_labels:
-            class_mask = labels == label_class
-            class_indices = class_mask.nonzero(as_tuple=True)[0]
-            real_class = real_images[class_indices]
-            labels_class = labels[class_indices]
-
-            noise_class = torch.randn(real_class.size(0), config['nz'], 1, 1, device=device)
-            fake_class = generator(noise_class, labels_class, alpha)
-            noisy_real = add_instance_noise(real_class, noise_std)
-            noisy_fake = add_instance_noise(fake_class.detach(), noise_std)
-            discriminator.zero_grad()
-            real_scores = discriminator(noisy_real, labels_class, alpha).view(-1)
-            fake_scores = discriminator(noisy_fake, labels_class, alpha).view(-1)
-
-            gp = compute_gradient_penalty(discriminator, real_class.data, fake_class.data, labels_class, alpha)
-            loss_D = d_loss(real_scores, fake_scores, gp)
-            loss_D.backward()
-            torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_grad_norm)
-            optimizer_D.step()
-            loss_discriminator += loss_D.item()
-            class_losses_D[int(label_class)] = loss_D.item()
-            mean_real_score = torch.mean(real_scores).item()
-            mean_fake_score = torch.mean(fake_scores).item()
-            # Train Generator
-            generator.zero_grad()
-            fake_scores_G = discriminator(fake_class, labels_class, alpha).view(-1)
-            loss_G = g_loss(fake_scores_G)
-            loss_G.backward()
-            torch.nn.utils.clip_grad_norm_(generator.parameters(), max_grad_norm)
-            optimizer_G.step()
-            loss_generator += loss_G.item()
-            class_losses_G[int(label_class)] = loss_G.item()
-
-    # Logging after each epoch
-    logger.log({
-        'epoch': epoch,
-        'loss_discriminator_total': loss_discriminator,
-        'loss_generator_total': loss_generator,
-        'loss_D_cat': class_losses_D.get(0, 0),
-        'loss_D_dog': class_losses_D.get(1, 0),
-        'loss_D_wild': class_losses_D.get(2, 0),
-        'loss_G_cat': class_losses_G.get(0, 0),
-        'loss_G_dog': class_losses_G.get(1, 0),
-        'loss_G_wild': class_losses_G.get(2, 0),
-        'instance_noise_std': noise_std,
-        'Discriminator_Mean_real': mean_real_score,
-        'Discriminator_mean_fake': mean_fake_score
-    }, step=epoch)
-
-    if epoch % 5 == 0:
-        generator.eval()
-        with torch.no_grad():
-            num_samples = fixed_noise.size(0)
-            sample_labels = torch.tensor(
-                ([0] * (num_samples // 3)) +
-                ([1] * (num_samples // 3)) +
-                ([2] * (num_samples - 2 * (num_samples // 3))),
-                dtype=torch.long, device=device
-            )
-
-            fake_images = generator(fixed_noise, sample_labels, alpha).detach().cpu()
-            print(fake_images.shape)
-            fake_images = (fake_images + 1) / 2
-            vutils.save_image(fake_images, f"{output_dir}/epoch_{epoch}.png", nrow=8, normalize=True)
-
-            logger.log({
-                "Generated Images": wandb.Image(
-                    vutils.make_grid(fake_images, nrow=8).permute(1, 2, 0).numpy(),
-                    caption=f"Epoch: {epoch}")
-            }, step=epoch)
-
-        generator.train()  # Switch back to training mode
-        real_batch, real_labels = next(iter(train_loader))
-        real_batch = real_batch[:64].to(device)
-        real_labels = real_labels[:64].to(device)
-
-        # Compute FID and KID scores
-        fid = compute_fid_score(generator, real_batch, real_labels, device, config['nz'])
-        kid = compute_kid_score(generator, real_batch, real_labels, device, config['nz'], real_batch.size(0))
-        torch.save(generator.state_dict(), "animalImageGAN.pt")
-        torch.save(generator, "animalImageGAN_full.pt")
-        logger.log({'epoch': epoch, "KID Score": kid}, step=epoch)
-        logger.log({'epoch': epoch, "FID Score": fid}, step=epoch)
-
-torch.save(generator.state_dict(), "animalImageGAN.pt")
-torch.save(generator, "animalImageGAN_full.pt")
+    for epoch in range(num_epochs + 1):
+        start = time.time()
+        models.current_epoch = epoch
+        alpha = 1.0
+        if 500 <= epoch < 800:
+            alpha = (1 - math.cos((epoch - 500) / 300 * math.pi)) / 2
+            alpha = min(alpha, 1.0)
+        if 1500 <= epoch < 2000:
+            alpha = (1 - math.cos((epoch - 1500) / 500 * math.pi)) / 2
+            alpha = min(alpha, 1.0)
+        print(epoch)
+        new_resolution = adjust_resolution(epoch)
+        print("new resolution output: ", new_resolution)
+        if new_resolution > current_resolution:
+            print(f"Resolution changing to {new_resolution} at epoch {epoch}")
+            new_generator = Generator(config['nz'], config['ngf'], config['nc'], 3, new_resolution).to(device)
+            new_discriminator = Discriminator(config['nc'], config['ndf'], 3, new_resolution).to(device)
+            generator.resolution = new_resolution
+            new_generator.load_state_dict(generator.state_dict(), strict=False)
+            new_discriminator.load_state_dict(discriminator.state_dict(), strict=False)
+            generator = new_generator
+            discriminator = new_discriminator
+            optimizer_G = optim.Adam(generator.parameters(), lr=learning_rate_gen, betas=(beta1, beta2))
+            optimizer_D = optim.Adam(discriminator.parameters(), lr=learning_rate_dis, betas=(beta1, beta2))
+            current_resolution = new_resolution
+            #Training_set = get_data(None,current_resolution)
+            #sample_size = len(training_set) // batch_size * batch_size
+            #indices_list = list(range(sample_size))
+            #training_set = torch.utils.data.Subset(training_set, indices_list)
+            #train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True, num_workers=8)
+    
+        noise_std = get_noise_std(epoch)
+        loss_discriminator = 0.0
+        loss_generator = 0.0
+        class_losses_D = {}
+        class_losses_G = {}
+    
+        for n, (real_images, labels) in enumerate(train_loader):
+            real_images = real_images.to(device)
+            labels = labels.to(device)
+            b_size = real_images.size(0)
+    
+            if current_resolution == 128 and real_images.size(2) == 64:
+                real_images = F.interpolate(real_images, size=128)
+    
+            unique_labels = torch.unique(labels)
+    
+            for label_class in unique_labels:
+                class_mask = labels == label_class
+                class_indices = class_mask.nonzero(as_tuple=True)[0]
+                real_class = real_images[class_indices]
+                labels_class = labels[class_indices]
+    
+                noise_class = torch.randn(real_class.size(0), config['nz'], 1, 1, device=device)
+                fake_class = generator(noise_class, labels_class, alpha)
+                noisy_real = add_instance_noise(real_class, noise_std)
+                noisy_fake = add_instance_noise(fake_class.detach(), noise_std)
+                discriminator.zero_grad()
+                real_scores = discriminator(noisy_real, labels_class, alpha).view(-1)
+                fake_scores = discriminator(noisy_fake, labels_class, alpha).view(-1)
+    
+                gp = compute_gradient_penalty(discriminator, real_class.data, fake_class.data, labels_class, alpha)
+                loss_D = d_loss(real_scores, fake_scores, gp)
+                loss_D.backward()
+                torch.nn.utils.clip_grad_norm_(discriminator.parameters(), max_grad_norm)
+                optimizer_D.step()
+                loss_discriminator += loss_D.item()
+                class_losses_D[int(label_class)] = loss_D.item()
+                mean_real_score = torch.mean(real_scores).item()
+                mean_fake_score = torch.mean(fake_scores).item()
+                # Train Generator
+                generator.zero_grad()
+                fake_scores_G = discriminator(fake_class, labels_class, alpha).view(-1)
+                loss_G = g_loss(fake_scores_G)
+                loss_G.backward()
+                torch.nn.utils.clip_grad_norm_(generator.parameters(), max_grad_norm)
+                optimizer_G.step()
+                loss_generator += loss_G.item()
+                class_losses_G[int(label_class)] = loss_G.item()
+    
+        # Logging after each epoch
+        logger.log({
+            'epoch': epoch,
+            'loss_discriminator_total': loss_discriminator,
+            'loss_generator_total': loss_generator,
+            'loss_D_cat': class_losses_D.get(0, 0),
+            'loss_D_dog': class_losses_D.get(1, 0),
+            'loss_D_wild': class_losses_D.get(2, 0),
+            'loss_G_cat': class_losses_G.get(0, 0),
+            'loss_G_dog': class_losses_G.get(1, 0),
+            'loss_G_wild': class_losses_G.get(2, 0),
+            'instance_noise_std': noise_std,
+            'Discriminator_Mean_real': mean_real_score,
+            'Discriminator_mean_fake': mean_fake_score
+        }, step=epoch)
+    
+        if epoch % 5 == 0:
+            generator.eval()
+            with torch.no_grad():
+                num_samples = fixed_noise.size(0)
+                sample_labels = torch.tensor(
+                    ([0] * (num_samples // 3)) +
+                    ([1] * (num_samples // 3)) +
+                    ([2] * (num_samples - 2 * (num_samples // 3))),
+                    dtype=torch.long, device=device
+                )
+    
+                fake_images = generator(fixed_noise, sample_labels, alpha).detach().cpu()
+                print(fake_images.shape)
+                fake_images = (fake_images + 1) / 2
+                vutils.save_image(fake_images, f"{output_dir}/epoch_{epoch}.png", nrow=8, normalize=True)
+    
+                logger.log({
+                    "Generated Images": wandb.Image(
+                        vutils.make_grid(fake_images, nrow=8).permute(1, 2, 0).numpy(),
+                        caption=f"Epoch: {epoch}")
+                }, step=epoch)
+    
+            generator.train()  # Switch back to training mode
+            real_batch, real_labels = next(iter(train_loader))
+            real_batch = real_batch[:64].to(device)
+            real_labels = real_labels[:64].to(device)
+    
+            # Compute FID and KID scores
+            fid = compute_fid_score(generator, real_batch, real_labels, device, config['nz'])
+            kid = compute_kid_score(generator, real_batch, real_labels, device, config['nz'], real_batch.size(0))
+            torch.save(generator.state_dict(), "animalImageGAN.pt")
+            torch.save(generator, "animalImageGAN_full.pt")
+            logger.log({'epoch': epoch, "KID Score": kid}, step=epoch)
+            logger.log({'epoch': epoch, "FID Score": fid}, step=epoch)
+    
+    torch.save(generator.state_dict(), "animalImageGAN.pt")
+    torch.save(generator, "animalImageGAN_full.pt")
 
